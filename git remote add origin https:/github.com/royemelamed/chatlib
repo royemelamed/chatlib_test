@@ -1,0 +1,77 @@
+# Protocol Constants
+
+CMD_FIELD_LENGTH = 16	# Exact length of cmd field (in bytes)
+LENGTH_FIELD_LENGTH = 4   # Exact length of length field (in bytes)
+MAX_DATA_LENGTH = 10**LENGTH_FIELD_LENGTH-1  # Max size of data field according to protocol
+MSG_HEADER_LENGTH = CMD_FIELD_LENGTH + 1 + LENGTH_FIELD_LENGTH + 1  # Exact size of header (CMD+LENGTH fields)
+MAX_MSG_LENGTH = MSG_HEADER_LENGTH + MAX_DATA_LENGTH  # Max size of total message
+DELIMITER = "|"  # Delimiter character in protocol
+DATA_DELIMITER = "#"  # Delimiter in the data part of the message
+
+# Protocol Messages 
+# In this dictionary we will have all the client and server command names
+
+PROTOCOL_CLIENT = {
+"login_msg" : "LOGIN",
+"logout_msg" : "LOGOUT"
+} # .. Add more commands if needed
+
+
+PROTOCOL_SERVER = {
+"login_ok_msg" : "LOGIN_OK",
+"login_failed_msg" : "ERROR"
+} # ..  Add more commands if needed
+
+
+# Other constants
+
+ERROR_RETURN = None  # What is returned in case of an error
+
+
+def build_message(cmd, data):
+    l = str(len(data))
+    x = l.zfill(4)
+    cmds = cmd.ljust(16 - len(cmd))
+    if len(cmd) <= CMD_FIELD_LENGTH and len(data) <= MAX_DATA_LENGTH:
+        return f"{cmds}{DELIMITER}{x}{DELIMITER}{data}"
+    else:
+        return ERROR_RETURN
+
+
+
+
+def parse_message(data):
+    n = data.split("|")
+    if data.count("|") != 2 or int(n[1]) > 9999 or len(n[0]) != 16 or n[2] > MAX_DATA_LENGTH:
+        return ERROR_RETURN, ERROR_RETURN
+    else:
+        cmd = n[0].replace(" ", "")
+        msg = n[2]
+
+    return cmd, msg
+
+	
+def split_data(msg, expected_fields):
+    j = 0
+    data_list = list(msg)
+    for char in data_list:
+        if char == DATA_DELIMITER:
+            j+= 1
+    if j == expected_fields:
+        output = msg.split(DATA_DELIMITER)
+    else:
+        output = ["None"]
+
+    return output
+        
+            
+
+
+def join_data(msg_fields):
+    msg = []
+    for i in msg_fields:
+        s = str(i)
+        msg.append(s)
+    x = DATA_DELIMITER.join(msg)
+    return x
+
